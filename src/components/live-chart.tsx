@@ -23,7 +23,7 @@ export default function LiveChart({ data, title, description, color }: LiveChart
   
   const chartData = useMemo(() => {
       if (data.length === 0) {
-        return Array.from({ length: 10 }, (_, i) => ({ timestamp: Date.now() + i * 1000, value: 0 }));
+        return Array.from({ length: 100 }, (_, i) => ({ timestamp: Date.now() + i * 100, value: 0 }));
       }
       return data;
   }, [data])
@@ -35,20 +35,20 @@ export default function LiveChart({ data, title, description, color }: LiveChart
             <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-            <ChartContainer config={chartConfig} className="h-[400px] w-full">
+            <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px] w-full">
                 <ResponsiveContainer>
                     <LineChart
                         data={chartData}
                         margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
                         >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
                         <XAxis
                             dataKey="timestamp"
                             tickFormatter={(time) => new Date(time).toLocaleTimeString()}
                             stroke="hsl(var(--muted-foreground))"
                             fontSize={12}
                         />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={['dataMin - 10', 'dataMax + 10']} />
                         <Tooltip
                             cursor={{ stroke: "hsl(var(--accent))", strokeWidth: 2 }}
                             content={<ChartTooltipContent indicator="dot" />}
@@ -60,7 +60,7 @@ export default function LiveChart({ data, title, description, color }: LiveChart
                             strokeWidth={2}
                             dot={false}
                             isAnimationActive={data.length > 0}
-                            animationDuration={300}
+                            animationDuration={200}
                         />
                     </LineChart>
                 </ResponsiveContainer>

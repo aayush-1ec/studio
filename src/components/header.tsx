@@ -1,4 +1,5 @@
-import { AreaChart } from "lucide-react";
+import { Fan } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 
 export default function Header() {
   return (
@@ -6,13 +7,14 @@ export default function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-              <AreaChart className="h-6 w-6" />
+            <div className="text-primary">
+              <Fan className="h-8 w-8 animate-spin" style={{ animationDuration: '3s' }} />
             </div>
-            <h1 className="text-2xl font-bold font-headline text-foreground">
-              RealTimeViz
+            <h1 className="text-xl md:text-2xl font-bold font-headline text-foreground dark:text-glow">
+              Smart Ventilation System — Coal Mine Safety
             </h1>
           </div>
+          <ThemeToggle />
         </div>
       </div>
     </header>

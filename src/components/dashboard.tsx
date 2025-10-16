@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSerial } from "@/hooks/use-serial";
-import { Plug, PlugZap, Power, PowerOff } from "lucide-react";
+import { PlugZap, Power, PowerOff } from "lucide-react";
 import AIEnhancer from "./ai-enhancer";
 import FanControl from "./fan-control";
 import LiveChart from "./live-chart";
@@ -27,7 +27,6 @@ export default function Dashboard() {
   );
   
   const handleSuggestion = useCallback((suggestion: SuggestColorSchemeOutput) => {
-    // Basic parsing of the color scheme string
     const firstColor = suggestion.colorScheme.split(',')[0].trim();
     setChartConfig({
       title: suggestion.titleSuggestion,
@@ -37,8 +36,8 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-      <div className="lg:col-span-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 items-start">
+      <div className="md:col-span-2 lg:col-span-2">
         <LiveChart 
           data={data}
           title={chartConfig.title}
@@ -47,7 +46,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
@@ -55,7 +54,7 @@ export default function Dashboard() {
                 <span>Device Connection</span>
             </CardTitle>
             <CardDescription>
-                Use the Web Serial API to connect to your Arduino.
+                Connect to your monitoring hardware.
             </CardDescription>
           </CardHeader>
           <CardContent>
