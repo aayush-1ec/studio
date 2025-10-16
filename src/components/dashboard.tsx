@@ -12,7 +12,7 @@ import ExportControl from "./export-control";
 import type { SuggestColorSchemeOutput } from "@/ai/flows/suggest-color-scheme";
 
 export default function Dashboard() {
-  const { isConnected, data, connect, disconnect, write } = useSerial(100);
+  const { isConnected, data, connect, disconnect, write, isUnusual } = useSerial(100);
 
   const [chartConfig, setChartConfig] = useState({
     title: "Live Sensor Data",
@@ -44,6 +44,7 @@ export default function Dashboard() {
           title={chartConfig.title}
           description={chartConfig.description}
           color={chartConfig.color}
+          isUnusual={isUnusual}
         />
       </div>
 

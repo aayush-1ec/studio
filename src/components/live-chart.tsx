@@ -1,19 +1,21 @@
 "use client";
 
-import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceArea } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SensorData } from "@/hooks/use-serial";
 import { useMemo } from "react";
+import { AlertTriangle } from "lucide-react";
 
 interface LiveChartProps {
   data: SensorData[];
   title: string;
   description: string;
   color: string;
+  isUnusual: boolean;
 }
 
-export default function LiveChart({ data, title, description, color }: LiveChartProps) {
+export default function LiveChart({ data, title, description, color, isUnusual }: LiveChartProps) {
   const chartConfig = useMemo(() => ({
     value: {
       label: "Sensor Value",
@@ -26,12 +28,22 @@ export default function LiveChart({ data, title, description, color }: LiveChart
         return Array.from({ length: 100 }, (_, i) => ({ timestamp: Date.now() + i * 100, value: 0 }));
       }
       return data;
-  }, [data])
+  }, [data]);
+
+  const lastTimestamp = chartData.length > 0 ? chartData[chartData.length - 1].timestamp : null;
 
   return (
     <Card>
         <CardHeader>
-            <CardTitle className="font-headline">{title}</CardTitle>
+            <CardTitle className="font-headline flex items-center justify-between">
+              <span>{title}</span>
+              {isUnusual && (
+                <div className="flex items-center gap-2 text-yellow-500 animate-pulse">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span className="text-sm font-medium">Unusual pattern detected</span>
+                </div>
+              )}
+            </CardTitle>
             <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,6 +74,16 @@ export default function LiveChart({ data, title, description, color }: LiveChart
                             isAnimationActive={data.length > 0}
                             animationDuration={200}
                         />
+                        {isUnusual && lastTimestamp && (
+                          <ReferenceArea
+                            x1={lastTimestamp - 2000}
+                            x2={lastTimestamp}
+                            stroke="red"
+                            strokeOpacity={0.3}
+                            fill="red"
+                            fillOpacity={0.1}
+                          />
+                        )}
                     </LineChart>
                 </ResponsiveContainer>
             </ChartContainer>

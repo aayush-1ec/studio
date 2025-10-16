@@ -8,15 +8,19 @@ export interface SensorData {
   value: number;
 }
 
+const UNUSUAL_CHANGE_THRESHOLD = 50; // A sudden change of 50 units is considered unusual
+
 export function useSerial(maxDataPoints: number = 100) {
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const [data, setData] = useState<SensorData[]>([]);
+  const [isUnusual, setIsUnusual] = useState(false);
 
   const port = useRef<SerialPort | null>(null);
   const reader = useRef<ReadableStreamDefaultReader<string> | null>(null);
   const writer = useRef<WritableStreamDefaultWriter<string> | null>(null);
   const keepReading = useRef(false);
+  const unusualPatternTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const disconnect = useCallback(async () => {
     if (!port.current) return;
@@ -25,7 +29,7 @@ export function useSerial(maxDataPoints: number = 100) {
     
     if (reader.current) {
       try {
-        reader.current.cancel();
+        await reader.current.cancel();
       } catch (error) {
         // Ignore cancel error
       }
@@ -33,7 +37,7 @@ export function useSerial(maxDataPoints: number = 100) {
 
     if (writer.current) {
         try {
-            writer.current.close();
+            await writer.current.close();
         } catch (error) {
             // Ignore close error
         }
@@ -86,6 +90,7 @@ export function useSerial(maxDataPoints: number = 100) {
       });
 
       let buffer = '';
+      let lastValue: number | null = null;
       while (port.current?.readable && keepReading.current) {
         try {
           const { value, done } = await reader.current.read();
@@ -94,13 +99,25 @@ export function useSerial(maxDataPoints: number = 100) {
           }
           buffer += value;
           const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep the last partial line in buffer
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
             const trimmedLine = line.trim();
             if (trimmedLine) {
               const numValue = parseFloat(trimmedLine);
               if (!isNaN(numValue)) {
+                
+                if(lastValue !== null) {
+                  if (Math.abs(numValue - lastValue) > UNUSUAL_CHANGE_THRESHOLD) {
+                    setIsUnusual(true);
+                    if (unusualPatternTimeout.current) {
+                      clearTimeout(unusualPatternTimeout.current);
+                    }
+                    unusualPatternTimeout.current = setTimeout(() => setIsUnusual(false), 3000);
+                  }
+                }
+                lastValue = numValue;
+
                 setData((prevData) => {
                   const newData = [
                     ...prevData,
@@ -172,11 +189,14 @@ export function useSerial(maxDataPoints: number = 100) {
     
     return () => {
       navigator.serial?.removeEventListener('disconnect', handleDisconnectEvent);
+      if(unusualPatternTimeout.current) {
+        clearTimeout(unusualPatternTimeout.current);
+      }
       if(isConnected) {
         disconnect();
       }
     };
   }, [disconnect, isConnected]);
 
-  return { isConnected, data, connect, disconnect, write };
+  return { isConnected, data, connect, disconnect, write, isUnusual };
 }
