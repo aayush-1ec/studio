@@ -25,7 +25,7 @@ export function useSerial(maxDataPoints: number = 100) {
     
     if (reader.current) {
       try {
-        await reader.current.cancel();
+        reader.current.cancel();
       } catch (error) {
         // Ignore cancel error
       }
@@ -33,7 +33,7 @@ export function useSerial(maxDataPoints: number = 100) {
 
     if (writer.current) {
         try {
-            await writer.current.close();
+            writer.current.close();
         } catch (error) {
             // Ignore close error
         }
