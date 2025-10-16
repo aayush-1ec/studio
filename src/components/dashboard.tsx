@@ -8,6 +8,7 @@ import { PlugZap, Power, PowerOff } from "lucide-react";
 import AIEnhancer from "./ai-enhancer";
 import FanControl from "./fan-control";
 import LiveChart from "./live-chart";
+import ExportControl from "./export-control";
 import type { SuggestColorSchemeOutput } from "@/ai/flows/suggest-color-scheme";
 
 export default function Dashboard() {
@@ -72,6 +73,8 @@ export default function Dashboard() {
         </Card>
 
         <FanControl onToggle={handleFanToggle} disabled={!isConnected} />
+
+        <ExportControl data={data} />
 
         <AIEnhancer onSuggestion={handleSuggestion} />
       </div>
