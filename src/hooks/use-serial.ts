@@ -20,7 +20,7 @@ export function useSerial(maxDataPoints: number = 100) {
   const reader = useRef<ReadableStreamDefaultReader<string> | null>(null);
   const writer = useRef<WritableStreamDefaultWriter<string> | null>(null);
   const keepReading = useRef(false);
-  const unusualPatternTimeout = useRef<NodeJS.Timeout | null>(null);
+  const unusualPatternTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const disconnect = useCallback(async () => {
     if (!port.current) return;
