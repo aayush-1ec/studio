@@ -23,7 +23,9 @@ export function useSerial(maxDataPoints: number = 100) {
   const unusualPatternTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const disconnect = useCallback(async () => {
-    if (!port.current) return;
+    if (port.current === null) {
+      return;
+    }
     
     keepReading.current = false;
     
@@ -167,7 +169,7 @@ export function useSerial(maxDataPoints: number = 100) {
         return;
     }
     try {
-        await writer.current.write(message + '\n');
+        await writer.current.write(message);
     } catch (error) {
         console.error("Failed to write to serial port:", error);
         toast({
