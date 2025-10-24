@@ -36,14 +36,6 @@ export function useSerial(maxDataPoints: number = 100) {
         // Ignore cancel error
       }
     }
-
-    if (writer.current) {
-        try {
-            await writer.current.close();
-        } catch (error) {
-            // Ignore close error
-        }
-    }
     
     try {
       await port.current.close();
