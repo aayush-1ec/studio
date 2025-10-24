@@ -48,11 +48,10 @@ export function useSerial(maxDataPoints: number = 100) {
     writer.current = null;
     setIsConnected(false);
     
-    toast({
-      title: "Disconnected",
-      description: "Serial device has been disconnected.",
-    });
-  }, [toast]);
+    // We can't use toast here as it would create a dependency loop with useEffect.
+    // The user will know they are disconnected by the UI change.
+    console.log("Serial device has been disconnected.");
+  }, []);
 
   const connect = useCallback(async () => {
     if (!("serial" in navigator)) {
@@ -69,11 +68,11 @@ export function useSerial(maxDataPoints: number = 100) {
       await port.current.open({ baudRate: 9600 });
 
       const textDecoder = new TextDecoderStream();
-      port.current.readable.pipeTo(textDecoder.writable);
+      const readableStreamClosed = port.current.readable.pipeTo(textDecoder.writable);
       reader.current = textDecoder.readable.getReader();
 
       const textEncoder = new TextEncoderStream();
-      textEncoder.readable.pipeTo(port.current.writable);
+      const writableStreamClosed = textEncoder.readable.pipeTo(port.current.writable);
       writer.current = textEncoder.writable.getWriter();
 
       setIsConnected(true);
@@ -126,17 +125,25 @@ export function useSerial(maxDataPoints: number = 100) {
           }
         } catch (error) {
           console.error("Error reading from serial port:", error);
-          toast({
-            variant: "destructive",
-            title: "Read Error",
-            description: "An error occurred while reading from the device.",
-          });
+          if (keepReading.current) {
+            toast({
+              variant: "destructive",
+              title: "Read Error",
+              description: "An error occurred while reading from the device.",
+            });
+          }
           keepReading.current = false;
         }
       }
 
+      reader.current?.releaseLock();
+      await readableStreamClosed.catch(() => { /* Ignore abort errors */ });
+      writer.current?.releaseLock();
+      await writableStreamClosed.catch(() => { /* Ignore abort errors */ });
+
+
       if (port.current) {
-          disconnect();
+          await disconnect();
       }
 
     } catch (error) {
@@ -161,7 +168,7 @@ export function useSerial(maxDataPoints: number = 100) {
         return;
     }
     try {
-        await writer.current.write(message);
+        await writer.current.write(message + '\n');
     } catch (error) {
         console.error("Failed to write to serial port:", error);
         toast({
@@ -186,11 +193,11 @@ export function useSerial(maxDataPoints: number = 100) {
       if(unusualPatternTimeout.current) {
         clearTimeout(unusualPatternTimeout.current);
       }
-      if(isConnected) {
+      if(port.current && keepReading.current) {
         disconnect();
       }
     };
-  }, [disconnect, isConnected]);
+  }, [disconnect]);
 
   return { isConnected, data, connect, disconnect, write, isUnusual };
 }
