@@ -37,6 +37,14 @@ export function useSerial(maxDataPoints: number = 100) {
       }
     }
     
+    if (writer.current) {
+        try {
+            await writer.current.close();
+        } catch (error) {
+            // Ignore close error
+        }
+    }
+    
     try {
       await port.current.close();
     } catch (error) {
@@ -48,10 +56,11 @@ export function useSerial(maxDataPoints: number = 100) {
     writer.current = null;
     setIsConnected(false);
     
-    // We can't use toast here as it would create a dependency loop with useEffect.
-    // The user will know they are disconnected by the UI change.
-    console.log("Serial device has been disconnected.");
-  }, []);
+    toast({
+        title: "Disconnected",
+        description: "Serial device has been disconnected.",
+    });
+  }, [toast]);
 
   const connect = useCallback(async () => {
     if (!("serial" in navigator)) {

@@ -1,19 +1,27 @@
 "use client";
 
 import { Fan } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { useState } from "react";
 
 interface FanControlProps {
-  onToggle: (isOn: boolean) => void;
+  onPowerChange: (power: number) => void;
   disabled: boolean;
 }
 
-export default function FanControl({ onToggle, disabled }: FanControlProps) {
-  const handleToggle = (isOn: boolean) => {
-    onToggle(isOn);
+export default function FanControl({ onPowerChange, disabled }: FanControlProps) {
+  const [power, setPower] = useState(0);
+
+  const handlePowerChange = (newPower: number[]) => {
+    const p = newPower[0];
+    setPower(p);
   };
+  
+  const handleCommit = (newPower: number[]) => {
+    onPowerChange(newPower[0]);
+  }
 
   return (
     <Card>
@@ -22,17 +30,28 @@ export default function FanControl({ onToggle, disabled }: FanControlProps) {
           <Fan className="w-5 h-5" />
           <span>Fan Control</span>
         </CardTitle>
+        <CardDescription>
+          {disabled ? "Connect a device to control the fan" : "Adjust fan speed from 0% to 100%"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between">
-          <Label htmlFor="fan-switch" className="text-muted-foreground">
-            {disabled ? "Connect device to control fan" : "Toggle fan power"}
-          </Label>
-          <Switch
-            id="fan-switch"
-            onCheckedChange={handleToggle}
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="fan-power-slider" className="text-muted-foreground">
+              Fan Speed
+            </Label>
+            <span className="font-bold text-lg w-16 text-right">{power}%</span>
+          </div>
+          <Slider
+            id="fan-power-slider"
+            min={0}
+            max={100}
+            step={10}
+            value={[power]}
+            onValueChange={handlePowerChange}
+            onValueCommit={handleCommit}
             disabled={disabled}
-            aria-label="Toggle Fan"
+            aria-label="Fan Power"
           />
         </div>
       </CardContent>
