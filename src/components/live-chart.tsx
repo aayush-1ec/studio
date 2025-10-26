@@ -12,23 +12,24 @@ interface LiveChartProps {
   title: string;
   description: string;
   color: string;
+  dataKey: keyof Omit<SensorData, 'timestamp'>;
   isUnusual: boolean;
 }
 
-export default function LiveChart({ data, title, description, color, isUnusual }: LiveChartProps) {
+export default function LiveChart({ data, title, description, color, dataKey, isUnusual }: LiveChartProps) {
   const chartConfig = useMemo(() => ({
-    value: {
+    [dataKey]: {
       label: "Sensor Value",
       color: color,
     },
-  }), [color]) satisfies ChartConfig;
+  }), [color, dataKey]) satisfies ChartConfig;
   
   const chartData = useMemo(() => {
       if (data.length === 0) {
-        return Array.from({ length: 100 }, (_, i) => ({ timestamp: Date.now() + i * 100, value: 0 }));
+        return Array.from({ length: 100 }, (_, i) => ({ timestamp: Date.now() + i * 100, [dataKey]: 0, co2: 0, temperature: 0, humidity: 0 }));
       }
       return data;
-  }, [data]);
+  }, [data, dataKey]);
 
   const lastTimestamp = chartData.length > 0 ? chartData[chartData.length - 1].timestamp : null;
 
@@ -37,10 +38,10 @@ export default function LiveChart({ data, title, description, color, isUnusual }
         <CardHeader>
             <CardTitle className="font-headline flex items-center justify-between">
               <span>{title}</span>
-              {isUnusual && (
+              {isUnusual && dataKey === 'co2' && (
                 <div className="flex items-center gap-2 text-yellow-500 animate-pulse">
                   <AlertTriangle className="w-5 h-5" />
-                  <span className="text-sm font-medium">Unusual pattern detected</span>
+                  <span className="text-sm font-medium">Unusual CO2 pattern</span>
                 </div>
               )}
             </CardTitle>
@@ -67,14 +68,14 @@ export default function LiveChart({ data, title, description, color, isUnusual }
                         />
                         <Line
                             type="monotone"
-                            dataKey="value"
+                            dataKey={dataKey}
                             stroke={color}
                             strokeWidth={2}
                             dot={false}
                             isAnimationActive={data.length > 0}
                             animationDuration={200}
                         />
-                        {isUnusual && lastTimestamp && (
+                        {isUnusual && dataKey === 'co2' && lastTimestamp && (
                           <ReferenceArea
                             x1={lastTimestamp - 2000}
                             x2={lastTimestamp}

@@ -3,16 +3,41 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSerial } from "@/hooks/use-serial";
-import { PlugZap, Power, PowerOff } from "lucide-react";
+import { useSerial, type SensorData } from "@/hooks/use-serial";
+import { PlugZap, Power, PowerOff, Thermometer, Droplets, CloudCog } from "lucide-react";
 import AIEnhancer from "./ai-enhancer";
 import FanControl from "./fan-control";
 import LiveChart from "./live-chart";
 import ExportControl from "./export-control";
 import type { SuggestColorSchemeOutput } from "@/ai/flows/suggest-color-scheme";
+import { cn } from "@/lib/utils";
+
+type ChartDataKey = keyof Omit<SensorData, 'timestamp'>;
+
+const CHART_CONFIGS: Record<ChartDataKey, { title: string, description: string, color: string, icon: React.ReactNode }> = {
+    co2: {
+        title: "Live CO2 Levels",
+        description: "Real-time CO2 concentration in parts per million (ppm).",
+        color: "hsl(var(--chart-1))",
+        icon: <CloudCog className="w-4 h-4" />,
+    },
+    temperature: {
+        title: "Live Temperature",
+        description: "Real-time ambient temperature readings in Celsius.",
+        color: "hsl(var(--chart-2))",
+        icon: <Thermometer className="w-4 h-4" />,
+    },
+    humidity: {
+        title: "Live Humidity",
+        description: "Real-time relative humidity percentage.",
+        color: "hsl(var(--chart-3))",
+        icon: <Droplets className="w-4 h-4" />,
+    },
+};
 
 export default function Dashboard() {
   const { isConnected, data, connect, disconnect, write, isUnusual } = useSerial(100);
+  const [selectedDataKey, setSelectedDataKey] = useState<ChartDataKey>('co2');
 
   const [chartConfig, setChartConfig] = useState({
     title: "Live Sensor Data",
@@ -22,7 +47,6 @@ export default function Dashboard() {
 
   const handleFanToggle = useCallback(
     (isOn: boolean) => {
-      // Send '1' for ON and '0' for OFF
       write(isOn ? '1' : '0');
     },
     [write]
@@ -36,17 +60,33 @@ export default function Dashboard() {
       color: firstColor,
     });
   }, []);
+  
+  const currentChartConfig = CHART_CONFIGS[selectedDataKey];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 items-start">
       <div className="md:col-span-2 lg:col-span-2">
         <LiveChart 
           data={data}
-          title={chartConfig.title}
-          description={chartConfig.description}
-          color={chartConfig.color}
+          title={chartConfig.title === "Live Sensor Data" ? currentChartConfig.title : chartConfig.title}
+          description={chartConfig.description === "Connect a serial device to start streaming data." ? currentChartConfig.description : chartConfig.description}
+          color={chartConfig.color === "hsl(var(--primary))" ? currentChartConfig.color : chartConfig.color}
+          dataKey={selectedDataKey}
           isUnusual={isUnusual}
         />
+        <div className="flex justify-center gap-2 mt-4">
+            {(Object.keys(CHART_CONFIGS) as ChartDataKey[]).map((key) => (
+                <Button 
+                    key={key} 
+                    variant={selectedDataKey === key ? "default" : "outline"} 
+                    onClick={() => setSelectedDataKey(key)}
+                    className={cn("gap-2", selectedDataKey === key && "shadow-md")}
+                >
+                    {CHART_CONFIGS[key].icon}
+                    {CHART_CONFIGS[key].title.replace("Live ", "")}
+                </Button>
+            ))}
+        </div>
       </div>
 
       <div className="space-y-4 lg:space-y-6">

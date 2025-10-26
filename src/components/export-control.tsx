@@ -23,10 +23,10 @@ export default function ExportControl({ data }: ExportControlProps) {
       return;
     }
 
-    const headers = ["timestamp", "value"];
+    const headers = ["timestamp", "co2", "temperature", "humidity"];
     const csvRows = [
       headers.join(","),
-      ...data.map(row => `${new Date(row.timestamp).toISOString()},${row.value}`)
+      ...data.map(row => `${new Date(row.timestamp).toISOString()},${row.co2},${row.temperature},${row.humidity}`)
     ];
     const csvContent = csvRows.join("\n");
 

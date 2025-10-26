@@ -5,10 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface SensorData {
   timestamp: number;
-  value: number;
+  co2: number;
+  temperature: number;
+  humidity: number;
 }
 
-const UNUSUAL_CHANGE_THRESHOLD = 50; // A sudden change of 50 units is considered unusual
+const UNUSUAL_CHANGE_THRESHOLD = 50; // A sudden change of 50 ppm for CO2 is unusual
 
 export function useSerial(maxDataPoints: number = 100) {
   const { toast } = useToast();
@@ -36,13 +38,15 @@ export function useSerial(maxDataPoints: number = 100) {
         // Ignore cancel error
       }
     }
-    
-    if (writer.current) {
-        try {
-            await writer.current.close();
-        } catch (error) {
-            // Ignore close error
-        }
+        
+    try {
+      if (port.current.writable) {
+        const localWriter = port.current.writable.getWriter();
+        await localWriter.close();
+        localWriter.releaseLock();
+      }
+    } catch (error) {
+        // Ignore close error
     }
     
     try {
@@ -106,29 +110,35 @@ export function useSerial(maxDataPoints: number = 100) {
           for (const line of lines) {
             const trimmedLine = line.trim();
             if (trimmedLine) {
-              const numValue = parseFloat(trimmedLine);
-              if (!isNaN(numValue)) {
-                
-                if(lastValue !== null) {
-                  if (Math.abs(numValue - lastValue) > UNUSUAL_CHANGE_THRESHOLD) {
-                    setIsUnusual(true);
-                    if (unusualPatternTimeout.current) {
-                      clearTimeout(unusualPatternTimeout.current);
-                    }
-                    unusualPatternTimeout.current = setTimeout(() => setIsUnusual(false), 3000);
-                  }
-                }
-                lastValue = numValue;
+              const parts = trimmedLine.split(',');
+              if (parts.length === 3) {
+                const co2 = parseFloat(parts[0]);
+                const temperature = parseFloat(parts[1]);
+                const humidity = parseFloat(parts[2]);
 
-                setData((prevData) => {
-                  const newData = [
-                    ...prevData,
-                    { timestamp: Date.now(), value: numValue },
-                  ];
-                  return newData.length > maxDataPoints
-                    ? newData.slice(newData.length - maxDataPoints)
-                    : newData;
-                });
+                if (!isNaN(co2) && !isNaN(temperature) && !isNaN(humidity)) {
+                  
+                  if(lastValue !== null) {
+                    if (Math.abs(co2 - lastValue) > UNUSUAL_CHANGE_THRESHOLD) {
+                      setIsUnusual(true);
+                      if (unusualPatternTimeout.current) {
+                        clearTimeout(unusualPatternTimeout.current);
+                      }
+                      unusualPatternTimeout.current = setTimeout(() => setIsUnusual(false), 3000);
+                    }
+                  }
+                  lastValue = co2;
+
+                  setData((prevData) => {
+                    const newData = [
+                      ...prevData,
+                      { timestamp: Date.now(), co2, temperature, humidity },
+                    ];
+                    return newData.length > maxDataPoints
+                      ? newData.slice(newData.length - maxDataPoints)
+                      : newData;
+                  });
+                }
               }
             }
           }
