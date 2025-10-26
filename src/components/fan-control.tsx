@@ -1,27 +1,23 @@
 "use client";
 
-import { Fan } from "lucide-react";
+import { Fan, Power, PowerOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 
 interface FanControlProps {
-  onPowerChange: (power: number) => void;
+  onToggle: (isOn: boolean) => void;
   disabled: boolean;
 }
 
-export default function FanControl({ onPowerChange, disabled }: FanControlProps) {
-  const [power, setPower] = useState(0);
+export default function FanControl({ onToggle, disabled }: FanControlProps) {
+  const [isOn, setIsOn] = useState(false);
 
-  const handlePowerChange = (newPower: number[]) => {
-    const p = newPower[0];
-    setPower(p);
+  const handleToggle = (checked: boolean) => {
+    setIsOn(checked);
+    onToggle(checked);
   };
-  
-  const handleCommit = (newPower: number[]) => {
-    onPowerChange(newPower[0]);
-  }
 
   return (
     <Card>
@@ -31,28 +27,32 @@ export default function FanControl({ onPowerChange, disabled }: FanControlProps)
           <span>Fan Control</span>
         </CardTitle>
         <CardDescription>
-          {disabled ? "Connect a device to control the fan" : "Adjust fan speed from 0% to 100%"}
+          {disabled ? "Connect a device to control the fan" : "Toggle the ventilation fan on or off."}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="fan-power-slider" className="text-muted-foreground">
-              Fan Speed
-            </Label>
-            <span className="font-bold text-lg w-16 text-right">{power}%</span>
-          </div>
-          <Slider
-            id="fan-power-slider"
-            min={0}
-            max={100}
-            step={10}
-            value={[power]}
-            onValueChange={handlePowerChange}
-            onValueCommit={handleCommit}
+        <div className="flex items-center justify-between space-x-4 rounded-lg border p-4">
+          <Label htmlFor="fan-switch" className="flex flex-col space-y-1">
+            <span>Fan Status</span>
+            <span className="font-normal leading-snug text-muted-foreground">
+              Turn the main ventilation fan on or off.
+            </span>
+          </Label>
+          <Switch
+            id="fan-switch"
+            checked={isOn}
+            onCheckedChange={handleToggle}
             disabled={disabled}
-            aria-label="Fan Power"
+            aria-label="Fan Switch"
           />
+        </div>
+         <div className="flex items-center justify-center text-sm text-muted-foreground pt-4">
+            {isOn ? (
+                <Power className="mr-2 text-green-500" />
+            ) : (
+                <PowerOff className="mr-2 text-red-500" />
+            )}
+            <span>{isOn ? "On" : "Off"}</span>
         </div>
       </CardContent>
     </Card>

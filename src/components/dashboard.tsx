@@ -20,11 +20,10 @@ export default function Dashboard() {
     color: "hsl(var(--primary))",
   });
 
-  const handleFanPowerChange = useCallback(
-    (power: number) => {
-      // Map power (0-100) to PWM value (0-255) and send as a string
-      const pwmValue = Math.round((power / 100) * 255);
-      write(`S${pwmValue}`); // 'S' for Speed
+  const handleFanToggle = useCallback(
+    (isOn: boolean) => {
+      // Send '1' for ON and '0' for OFF
+      write(isOn ? '1' : '0');
     },
     [write]
   );
@@ -75,7 +74,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <FanControl onPowerChange={handleFanPowerChange} disabled={!isConnected} />
+        <FanControl onToggle={handleFanToggle} disabled={!isConnected} />
 
         <ExportControl data={data} />
 
