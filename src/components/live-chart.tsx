@@ -1,6 +1,6 @@
 "use client";
 
-import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceArea } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceArea } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SensorData } from "@/hooks/use-serial";
@@ -50,7 +50,7 @@ export default function LiveChart({ data, title, description, color, dataKey, is
         <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px] w-full">
                 <ResponsiveContainer>
-                    <LineChart
+                    <AreaChart
                         data={chartData}
                         margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
                         >
@@ -66,11 +66,19 @@ export default function LiveChart({ data, title, description, color, dataKey, is
                             cursor={{ stroke: "hsl(var(--accent))", strokeWidth: 2 }}
                             content={<ChartTooltipContent indicator="dot" />}
                         />
-                        <Line
+                        <defs>
+                          <linearGradient id={`color-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={color} stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <Area
                             type="monotone"
                             dataKey={dataKey}
                             stroke={color}
                             strokeWidth={2}
+                            fillOpacity={1}
+                            fill={`url(#color-${dataKey})`}
                             dot={false}
                             isAnimationActive={data.length > 0}
                             animationDuration={200}
@@ -85,7 +93,7 @@ export default function LiveChart({ data, title, description, color, dataKey, is
                             fillOpacity={0.1}
                           />
                         )}
-                    </LineChart>
+                    </AreaChart>
                 </ResponsiveContainer>
             </ChartContainer>
         </CardContent>
