@@ -25,8 +25,8 @@
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
     --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
+    --chart-2: 25 95% 53%; /* Orange for Temperature */
+    --chart-3: 262 80% 58%; /* Light Purple for Humidity */
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
@@ -52,8 +52,8 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 172 100% 50%; /* Neon Green */
     --chart-1: 172 100% 50%;
-    --chart-2: 180 100% 50%;
-    --chart-3: 190 100% 50%;
+    --chart-2: 35 100% 50%; /* Bright Orange for Temperature */
+    --chart-3: 272 100% 70%; /* Bright Purple for Humidity */
     --chart-4: 200 100% 50%;
     --chart-5: 210 100% 50%;
   }

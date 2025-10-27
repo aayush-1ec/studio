@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [chartConfig, setChartConfig] = useState({
     title: "Live Sensor Data",
     description: "Connect a serial device to start streaming data.",
-    color: "hsl(var(--primary))",
+    color: "",
   });
 
   const handleFanToggle = useCallback(
@@ -62,6 +62,7 @@ export default function Dashboard() {
   }, []);
   
   const currentChartConfig = CHART_CONFIGS[selectedDataKey];
+  const activeColor = chartConfig.color || currentChartConfig.color;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 items-start">
@@ -70,7 +71,7 @@ export default function Dashboard() {
           data={data}
           title={chartConfig.title === "Live Sensor Data" ? currentChartConfig.title : chartConfig.title}
           description={chartConfig.description === "Connect a serial device to start streaming data." ? currentChartConfig.description : chartConfig.description}
-          color={chartConfig.color === "hsl(var(--primary))" ? currentChartConfig.color : chartConfig.color}
+          color={activeColor}
           dataKey={selectedDataKey}
           isUnusual={isUnusual}
         />
@@ -79,8 +80,19 @@ export default function Dashboard() {
                 <Button 
                     key={key} 
                     variant={selectedDataKey === key ? "default" : "outline"} 
-                    onClick={() => setSelectedDataKey(key)}
+                    onClick={() => {
+                        setSelectedDataKey(key);
+                        // Reset AI enhancer when switching views
+                        setChartConfig({
+                            title: "Live Sensor Data",
+                            description: "Connect a serial device to start streaming data.",
+                            color: "",
+                        });
+                    }}
                     className={cn("gap-2", selectedDataKey === key && "shadow-md")}
+                    style={{
+                        backgroundColor: selectedDataKey === key ? CHART_CONFIGS[key].color : undefined,
+                    }}
                 >
                     {CHART_CONFIGS[key].icon}
                     {CHART_CONFIGS[key].title.replace("Live ", "")}
