@@ -11,6 +11,7 @@ import LiveChart from "./live-chart";
 import ExportControl from "./export-control";
 import type { SuggestColorSchemeOutput } from "@/ai/flows/suggest-color-scheme";
 import { cn } from "@/lib/utils";
+import AlarmControl from "./alarm-control";
 
 type ChartDataKey = keyof Omit<SensorData, 'timestamp'>;
 
@@ -48,6 +49,13 @@ export default function Dashboard() {
   const handleFanToggle = useCallback(
     (isOn: boolean) => {
       write(isOn ? '1' : '0');
+    },
+    [write]
+  );
+
+  const handleAlarmToggle = useCallback(
+    (isMuted: boolean) => {
+      write(isMuted ? 'M1' : 'M0');
     },
     [write]
   );
@@ -127,6 +135,8 @@ export default function Dashboard() {
         </Card>
 
         <FanControl onToggle={handleFanToggle} disabled={!isConnected} />
+        
+        <AlarmControl onToggle={handleAlarmToggle} disabled={!isConnected} />
 
         <ExportControl data={data} />
 
