@@ -85,12 +85,12 @@ export default function LiveChart({ data, title, description, color, dataKey, is
                         />
                         {isUnusual && dataKey === 'co2' && lastTimestamp && (
                           <ReferenceArea
-                            x1={lastTimestamp - 2000}
+                            x1={lastTimestamp - 10000}
                             x2={lastTimestamp}
-                            stroke="red"
-                            strokeOpacity={0.3}
-                            fill="red"
-                            fillOpacity={0.1}
+                            stroke="hsl(var(--destructive))"
+                            strokeOpacity={0.5}
+                            fill="hsl(var(--destructive))"
+                            fillOpacity={0.2}
                           />
                         )}
                     </AreaChart>

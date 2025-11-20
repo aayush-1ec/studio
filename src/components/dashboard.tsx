@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSerial, type SensorData } from "@/hooks/use-serial";
@@ -68,6 +68,14 @@ export default function Dashboard() {
       color: firstColor,
     });
   }, []);
+
+  useEffect(() => {
+    if (isUnusual) {
+      document.documentElement.classList.add('danger');
+    } else {
+      document.documentElement.classList.remove('danger');
+    }
+  }, [isUnusual]);
   
   const currentChartConfig = CHART_CONFIGS[selectedDataKey];
   const activeColor = chartConfig.color || currentChartConfig.color;
@@ -97,9 +105,11 @@ export default function Dashboard() {
                             color: "",
                         });
                     }}
-                    className={cn("gap-2", selectedDataKey === key && "shadow-md")}
+                    className={cn("gap-2 transition-all duration-300", selectedDataKey === key && "shadow-lg scale-105")}
                     style={{
-                        backgroundColor: selectedDataKey === key ? CHART_CONFIGS[key].color : undefined,
+                      '--chart-color': CHART_CONFIGS[key].color,
+                       backgroundColor: selectedDataKey === key ? 'var(--chart-color)' : undefined,
+                       borderColor: selectedDataKey === key ? 'var(--chart-color)' : undefined,
                     }}
                 >
                     {CHART_CONFIGS[key].icon}

@@ -57,6 +57,12 @@
     --chart-4: 200 100% 50%;
     --chart-5: 210 100% 50%;
   }
+
+  .dark.danger {
+    --primary: 350 85% 55%; /* Crimson */
+    --accent: 350 85% 55%;
+    --ring: 350 85% 55%;
+  }
 }
 
 @layer base {

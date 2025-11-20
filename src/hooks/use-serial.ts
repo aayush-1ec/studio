@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 
 export interface SensorData {
   timestamp: number;
@@ -10,10 +11,12 @@ export interface SensorData {
   humidity: number;
 }
 
-const UNUSUAL_CHANGE_THRESHOLD = 50; // A sudden change of 50 ppm for CO2 is unusual
+const UNUSUAL_CO2_RISE = 200;
+const UNUSUAL_TIME_WINDOW = 10000; // 10 seconds
 
 export function useSerial(maxDataPoints: number = 100) {
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [isConnected, setIsConnected] = useState(false);
   const [data, setData] = useState<SensorData[]>([]);
   const [isUnusual, setIsUnusual] = useState(false);
@@ -23,6 +26,7 @@ export function useSerial(maxDataPoints: number = 100) {
   const writer = useRef<WritableStreamDefaultWriter<string> | null>(null);
   const keepReading = useRef(false);
   const unusualPatternTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const originalTheme = useRef(theme);
 
   const disconnect = useCallback(async () => {
     if (port.current === null) {
@@ -79,6 +83,8 @@ export function useSerial(maxDataPoints: number = 100) {
     try {
       port.current = await navigator.serial.requestPort();
       await port.current.open({ baudRate: 9600 });
+      
+      originalTheme.current = theme;
 
       const textDecoder = new TextDecoderStream();
       const readableStreamClosed = port.current.readable.pipeTo(textDecoder.writable);
@@ -96,7 +102,6 @@ export function useSerial(maxDataPoints: number = 100) {
       });
 
       let buffer = '';
-      let lastValue: number | null = null;
       while (port.current?.readable && keepReading.current) {
         try {
           const { value, done } = await reader.current.read();
@@ -117,23 +122,36 @@ export function useSerial(maxDataPoints: number = 100) {
                 const humidity = parseFloat(parts[2]);
 
                 if (!isNaN(co2) && !isNaN(temperature) && !isNaN(humidity)) {
-                  
-                  if(lastValue !== null) {
-                    if (Math.abs(co2 - lastValue) > UNUSUAL_CHANGE_THRESHOLD) {
-                      setIsUnusual(true);
-                      if (unusualPatternTimeout.current) {
-                        clearTimeout(unusualPatternTimeout.current);
-                      }
-                      unusualPatternTimeout.current = setTimeout(() => setIsUnusual(false), 3000);
-                    }
-                  }
-                  lastValue = co2;
+                  const now = Date.now();
 
                   setData((prevData) => {
                     const newData = [
                       ...prevData,
-                      { timestamp: Date.now(), co2, temperature, humidity },
+                      { timestamp: now, co2, temperature, humidity },
                     ];
+                    
+                    const tenSecondsAgo = now - UNUSUAL_TIME_WINDOW;
+                    const relevantData = newData.filter(d => d.timestamp >= tenSecondsAgo);
+
+                    if (relevantData.length > 1) {
+                        const oldestCO2 = relevantData[0].co2;
+                        const latestCO2 = relevantData[relevantData.length - 1].co2;
+
+                        if (latestCO2 - oldestCO2 > UNUSUAL_CO2_RISE) {
+                            if (!isUnusual) {
+                                setIsUnusual(true);
+                                document.documentElement.classList.add('danger');
+                            }
+                            if (unusualPatternTimeout.current) {
+                                clearTimeout(unusualPatternTimeout.current);
+                            }
+                            unusualPatternTimeout.current = setTimeout(() => {
+                                setIsUnusual(false);
+                                document.documentElement.classList.remove('danger');
+                            }, 5000); // Keep warning for 5 seconds
+                        }
+                    }
+
                     return newData.length > maxDataPoints
                       ? newData.slice(newData.length - maxDataPoints)
                       : newData;
@@ -160,7 +178,7 @@ export function useSerial(maxDataPoints: number = 100) {
       writer.current?.releaseLock();
       await writableStreamClosed.catch(() => { /* Ignore abort errors */ });
 
-
+      document.documentElement.classList.remove('danger');
       if (port.current) {
           await disconnect();
       }
@@ -175,7 +193,7 @@ export function useSerial(maxDataPoints: number = 100) {
         });
       }
     }
-  }, [toast, maxDataPoints, disconnect]);
+  }, [toast, maxDataPoints, disconnect, theme, isUnusual]);
   
   const write = useCallback(async (message: string) => {
     if (!writer.current) {
@@ -201,6 +219,7 @@ export function useSerial(maxDataPoints: number = 100) {
   useEffect(() => {
     const handleDisconnectEvent = (e: Event) => {
       if (e.target === port.current) {
+        document.documentElement.classList.remove('danger');
         disconnect();
       }
     };
@@ -209,6 +228,7 @@ export function useSerial(maxDataPoints: number = 100) {
     
     return () => {
       navigator.serial?.removeEventListener('disconnect', handleDisconnectEvent);
+      document.documentElement.classList.remove('danger');
       if(unusualPatternTimeout.current) {
         clearTimeout(unusualPatternTimeout.current);
       }
